@@ -59,6 +59,8 @@ def main():
     options = parse_args()
     if options['tag_filters']:
         tag_names = options['tag_filters'].split(',')
+    else:
+        tag_names = ''
     if options['config'] is None:
         print('No config', file=sys.stderr)
         sys.exit(1)
@@ -109,7 +111,7 @@ def main():
             if ( 'tag' in d['entry'] and options['tag_filters']) or (tag_filter_exists == False):
 
                 for tags in d["entry"]["tag"]["entry"]:
-                    if tags['name'] in options['tag_filters']:
+                    if tags['name'] in tag_names or (tag_filter_exists == False):
                         yaml_tag = build_tags_dict(tags)
                         print("- name: create a tag\n\tpanos_object:\n\t\toperation: 'add'")
                         for val in yaml_tag:
@@ -137,7 +139,7 @@ def main():
                                 yaml_rule = build_secpol_yaml_dict(rule)
                                 print_yaml_output(yaml_rule)
 
-            if 'rules' in d['entry']['rulebase']['nat']:
+            if 'nat' in d['entry']['rulebase']:
                 for nat_rules in d['entry']['rulebase']['nat']['rules']['entry']:
                     if ('tag' in nat_rules.keys() and options['tag_filters']) or (tag_filter_exists == False):
                              yaml_nat_rule = build_natpol_yaml_dict(nat_rules)
