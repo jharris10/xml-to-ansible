@@ -6,14 +6,13 @@ Usage
 
 python xml-to-ansbile.py -h
 
-positional arguments:
-xpath                 xpath for config file
-config                path to config file
-optional arguments:
-  -h, --help            show this help message and exit
-  -a,                   Output Ansible
-  -d DEBUG,             Enable debug level 0 to 3
-  -tags TAGS            Comma delimited tags. eg. linux,apache,server
+positional arguments
+xpath - xpath for config file
+config - path to config file
+optional arguments
+-h            show this help message and exit
+-d DEBUG,             Enable debug level 0 to 3
+-tags TAGS            Comma delimited tags. eg. linux,apache,server
 
 python xml-to-ansbile.py "xpath" "configfile" -tag [taglist in csv format]
 
