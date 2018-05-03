@@ -6,9 +6,8 @@ Usage
 python xml-to-ansbile.py -h
 
 positional arguments:
-  xpath                 xpath for config file
-  config                path to config file
-
+xpath                 xpath for config file
+config                path to config file
 optional arguments:
   -h, --help            show this help message and exit
   -a,                   Output Ansible
