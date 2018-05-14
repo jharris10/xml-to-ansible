@@ -113,12 +113,13 @@ def main():
                 for tags in d["entry"]["tag"]["entry"]:
                     if tags['name'] in tag_names or (tag_filter_exists == False):
                         yaml_tag = build_tags_dict(tags)
-                        print("- name: create a tag\n\tpanos_object:\n\t\toperation: 'add'")
-                        for val in yaml_tag:
-                            if isinstance(yaml_tag[val], str):
-                                print("\t\t{0} = '{1}',".format(val, yaml_tag[val]))
-                            else:
-                                print("\t\t{0} = {1},".format(val, yaml_tag[val]))
+                        # print("- name: create a tag\n\tpanos_object:\n\t\toperation: 'add'")
+                        print_yaml_output(yaml_tag)
+                        # for val in yaml_tag:
+                        #     if isinstance(yaml_tag[val], str):
+                        #         print("\t\t{0} = '{1}',".format(val, yaml_tag[val]))
+                        #     else:
+                        #         print("\t\t{0} = {1},".format(val, yaml_tag[val]))
 
             if 'address' in d['entry']:
                 for addr_rule in d['entry']["address"]["entry"]:
@@ -127,7 +128,7 @@ def main():
                         print_yaml_output(yaml_addr_rule)
 
             if 'address-group' in d['entry']:
-                for grps in d["entry"]["address-group"]["entry"]:
+                for grps in d["entry"]["address-group"]["address"]["entry"]:
                     if ('tag' in grps.keys() and options['tag_filters']) or (tag_filter_exists == False):
                         yaml_addr_grp = build_address_group_dict(grps)
                         print_yaml_output(yaml_addr_grp)
@@ -144,11 +145,6 @@ def main():
                     if ('tag' in nat_rules.keys() and options['tag_filters']) or (tag_filter_exists == False):
                              yaml_nat_rule = build_natpol_yaml_dict(nat_rules)
                              print_yaml_output(yaml_nat_rule)
-
-
-
-
-
     sys.exit(0)
 
 
@@ -285,17 +281,21 @@ def build_secpol_yaml_dict(rule):
         'log-end': 'log-end',
         'log-start': 'log_start',
         'rule-type': 'rule_type',
-        'tag': 'tag_name'
+        'tag': 'tag_name',
+        'group':'group_profile'
     }
 
     name_dict = {}
     name_dict.update({'title': 'Add a security rule to the firewall', 'header': (object_mapping['security'])})
 
     if 'profile-setting' in rule.keys():
-        if rule['profile-setting']['profiles']:
+        if 'profiles' in rule['profile-setting']:
             for profiles in rule['profile-setting']['profiles']:
                 if profiles:
                     name_dict.update({rulemapdict[profiles]: rule['profile-setting']['profiles'][profiles]['member']})
+        elif 'group' in rule['profile-setting']:
+            name_dict.update({rulemapdict['group']: rule['profile-setting']['group']['member']})
+
         del rule['profile-setting']
 
     for k in rule:
@@ -396,12 +396,13 @@ def build_natpol_yaml_dict(rule):
 def parse_args():
     parser = argparse.ArgumentParser(description="Tag an IP address on a Palo Alto Networks Next generation Firewall")
 
-    parser.add_argument('-a', '--ansible', action='store_true', help="Output Ansible")
-    parser.add_argument('-d', '--debug', action='store', default=False, help="Enable debug level 0 to 3")
+#    parser.add_argument('-a', '--ansible', action='store_true', help="Output Ansible")
+
 
     parser.add_argument('xpath', help="xpath for config file ")
     parser.add_argument('config', help="path to config file ")
-    parser.add_argument('-tags', help="Comma delimited tags.  eg. linux,apache,server", default=None, action='store')
+    parser.add_argument('-t','--tags', help="Comma delimited tags.  eg. linux,apache,server", default=None, action='store')
+    parser.add_argument('-d', '--debug', action='store', default=False, help="Enable debug level 0 to 3")
 
     # ** Usage **::
     #
@@ -437,58 +438,58 @@ def parse_args():
     return options
 
 
-def parse_opts():
-    options = {
-        'config': None,
-        'xpath': None,
-        'debug': 0,
-        'tags': ''
-    }
+# def parse_opts():
+#     options = {
+#         'config': None,
+#         'xpath': None,
+#         'debug': 0,
+#         'tags': ''
+#     }
+#
+#     short_options = 'tags'
+#     long_options = ['version', 'help', 'debug=',
+#                     'config=', 'ansible'
+#                     ]
+#
+#     try:
+#         opts, args = getopt.getopt(sys.argv[1:],
+#                                    short_options,
+#                                    long_options)
+#     except getopt.GetoptError as error:
+#         print(error, file=sys.stderr)
+#         sys.exit(1)
 
-    short_options = 'tags'
-    long_options = ['version', 'help', 'debug=',
-                    'config=', 'ansible'
-                    ]
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],
-                                   short_options,
-                                   long_options)
-    except getopt.GetoptError as error:
-        print(error, file=sys.stderr)
-        sys.exit(1)
-
-    for opt, arg in opts:
-        if opt == '--config':
-            options['config'] = arg
-        elif opt == '--tags':
-            options['tags'] = arg
-        elif opt == '--ansible':
-            options['print_ansible'] = True
-        elif opt == '--debug':
-            try:
-                options['debug'] = int(arg)
-                if options['debug'] < 0:
-                    raise ValueError
-            except ValueError:
-                print('Invalid debug:', arg, file=sys.stderr)
-                sys.exit(1)
-            if options['debug'] > 3:
-                print('Maximum debug level is 3', file=sys.stderr)
-                sys.exit(1)
-        elif opt == '--version':
-            print('pan-python', pan.config.__version__)
-            sys.exit(0)
-        elif opt == '--help':
-            usage()
-            sys.exit(0)
-        else:
-            assert False, 'unhandled option %s' % opt
-
-    if len(args) > 0:
-        options['xpath'] = args[0]
-
-    return options
+    # for opt, arg in opts:
+    #     if opt == '--config':
+    #         options['config'] = arg
+    #     elif opt == '--tags':
+    #         options['tags'] = arg
+    #     elif opt == '--ansible':
+    #         options['print_ansible'] = True
+    #     elif opt == '--debug':
+    #         try:
+    #             options['debug'] = int(arg)
+    #             if options['debug'] < 0:
+    #                 raise ValueError
+    #         except ValueError:
+    #             print('Invalid debug:', arg, file=sys.stderr)
+    #             sys.exit(1)
+    #         if options['debug'] > 3:
+    #             print('Maximum debug level is 3', file=sys.stderr)
+    #             sys.exit(1)
+    #     elif opt == '--version':
+    #         print('pan-python', pan.config.__version__)
+    #         sys.exit(0)
+    #     elif opt == '--help':
+    #         usage()
+    #         sys.exit(0)
+    #     else:
+    #         assert False, 'unhandled option %s' % opt
+    #
+    # if len(args) > 0:
+    #     options['xpath'] = args[0]
+    #
+    # return options
 
 
 def read_file(path):
